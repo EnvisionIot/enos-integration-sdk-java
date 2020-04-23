@@ -45,7 +45,7 @@ desired version by inserting the following code snippet:
 <dependency>
     <groupId>com.envisioniot</groupId>
     <artifactId>enos-http-integration</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <!--This is latest current version number when this document is being written. Yours may vary.-->
 </dependency>
 ----
@@ -144,3 +144,4 @@ Under development
 == Release Notes
 
 * 2020/03/15 (Initial Release): Providing Integration APIs, File APIs
+* 2020/04/15 (0.1.1): Support OTA file download
