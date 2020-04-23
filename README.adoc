@@ -1,0 +1,147 @@
+= Using EnOS Integration SDK For Java
+:toc:
+
+== Installation
+
+=== Prerequisites
+
+==== Installing Java JDK SE
+
+*Java SE 8* is required to use the SDK and run the samples.
+
+==== Optional: Installing Maven
+
+The Java SDK is maven-based. If you use Maven 3, you just need
+to add the dependency upon the Java SDK to the main _pom.xml_
+file of your project, saving the efforts to download and build from
+source code.
+
+For instructions on downloading and installing *Maven 3*, see
+https://maven.apache.org/install.html[here].
+
+=== Installing EnOS Integration SDK for Java
+
+Select one of the following ways to install the Java SDK:
+
+- If your project is maven-based, add the dependency on the Java SDK to the
+main _pom.xml_ of your project.
+- Download the source code and build on your machine.
+
+=== Adding the Maven Dependency to Your Project
+
+*This is the recommended method to use EnOS Integration SDK in your project.
+Your project has to be a Maven project and you have installed Maven on
+your machine.*
+
+[arabic]
+. Go to http://search.maven.org/[http://search.maven.org]. Search for
+*com.envisioniot enos-http-integration* and find the version number for the SDK that
+you want to use.
+. In your main _pom.xml_ file, add the dependency on the SDK of your
+desired version by inserting the following code snippet:
++
+[source,xml]
+----
+<dependency>
+    <groupId>com.envisioniot</groupId>
+    <artifactId>enos-http-integration</artifactId>
+    <version>0.1.1</version>
+    <!--This is latest current version number when this document is being written. Yours may vary.-->
+</dependency>
+----
+
+==== Building From the Source Code
+
+[arabic]
+. Download the source code of *EnOS Integration SDK for Java* from the
+*master* branch of the GitHub repository:
+https://github.com/EnvisionIot/enos-integration-sdk-java
++
+If you use the command-line interface, the command for download is as
+follows:
++
+[source,shell]
+----
+git clone https://github.com/EnvisionIot/enos-integration-sdk-java.git
+----
+. Build the SDK from source code using the following command in your
+command-line interface:
++
+[source,shell]
+----
+mvn install
+----
+
+The compiled JAR file with all dependencies bundled can then be found in
+the following file:
+
+....
+{Integration SDK for Java root}/target/enos-http-integration-{version}.jar
+....
+
+If you want to use the integration SDK in your own project, include this JAR
+file and any JAR files that the integration SDK depends on in your project.
+
+== Feature List
+
+This integration SDK provides:
+
+- Upload measurement points
+- Upload attributes
+- Upload events
+
+File-type measurement points, attributes and events are supported.
+This SDK also provides:
+- Download file
+- Delete file
+
+== Quick Start
+
+[arabic]
+. Create an HTTP connection and specify the connection parameters.
++
+[source,java]
+----
+// BROKER_URL is the URL of EnOS HTTP Broker and TOKEN_SERVER_URL is the URL of Enos APIM Server, which can be obtained in the Environment Information page in EnOS Console
+// The APP_KEY, APP_SECRET and ORG_ID can be obtain in Application Registration page in EnOS Console
+HttpConnection connection = new HttpConnection.Builder(
+        BROKER_URL, TOKEN_SERVER_URL, APP_KEY, APP_SECRET, ORG_ID)
+        .build();
+----
+. Upload measurement points via the HTTP connection.
++
+[source,java]
+----
+// Build a request to post a measurement point
+// IntMeasurePoint and FileMeasurePoint is a measurement point defined in EnOS console > Model.
+DeviceInfo deviceInfo = new DeviceInfo().setAssetId(ASSET_ID1);
+IntegrationMeasurepointPostRequest request = IntegrationMeasurepointPostRequest.builder()
+        .addMeasurepoint(deviceInfo, System.currentTimeMillis(), ImmutableMap.of("IntMeasurePoint", 100, "FileMeasurePoint", new File("sample.txt")))
+        .build();
+// Publish the request synchronously with progress listener if provided
+IntegrationResponse response = connection.publish(request, progressListener);
+----
+
+== Sample Code
+
+* link:sample/MeasurepointPostSample.java[Uploading Measurement Points]
+* link:sample/FileMeasurepointPostSample.java[Uploading a File as Measurement Points]
+* link:sample/DownloadFileSample.java[Downloading a File]
+* link:sample/DeleteFileSample.java[Deleting a File]
+
+== Related Information
+
+* To learn more about EnOS IoT Hub, see
+https://support.envisioniot.com/docs/device-connection/en/latest/device_management_overview.html[EnOS
+IoT Hub Documentation].
+* To learn more about how to develop integration for EnOS IoT Hub, see
+link:[EnOS Integration].
+
+== API Reference
+
+Under development
+
+== Release Notes
+
+* 2020/03/15 (Initial Release): Providing Integration APIs, File APIs
+* 2020/04/15 (0.1.1): Support OTA file download
