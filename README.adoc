@@ -126,9 +126,9 @@ IntegrationResponse response = connection.publish(request, progressListener);
 
 * link:sample/MeasurepointIntegrationSample.java[Uploading Measurement Points]
 * link:sample/FileMeasurepointIntegrationSample.java[Uploading a File as Measurement Points]
-* link:sample/DeleteFileSample.java[Uploading a File as Measurement Points by Lark]
+* link:sample/FileMeasurepointIntegrationByLarkSample.java[Uploading a File as Measurement Points by Lark]
 * link:sample/DownloadFileSample.java[Downloading a File]
-* link:sample/DeleteFileSample.java[Downloading a File by Lark]
+* link:sample/DownloadFileByLarkSample.java[Downloading a File by Lark]
 * link:sample/DeleteFileSample.java[Deleting a File]
 
 == Related Information
