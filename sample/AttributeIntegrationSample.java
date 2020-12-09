@@ -1,0 +1,82 @@
+import com.envisioniot.enos.iot_http_integration.HttpConnection;
+import com.envisioniot.enos.iot_http_integration.message.IIntegrationCallback;
+import com.envisioniot.enos.iot_http_integration.message.IntegrationAttributePostRequest;
+import com.envisioniot.enos.iot_http_integration.message.IntegrationResponse;
+import com.envisioniot.enos.iot_mqtt_sdk.core.exception.EnvisionException;
+import com.envisioniot.enos.sdk.data.DeviceInfo;
+import com.google.common.collect.Maps;
+import com.google.gson.GsonBuilder;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+
+public class AttributeIntegrationSample {
+    // EnOS Token Server URL and HTTP Broker URL, which can be obtained from Environment Information page in EnOS Console
+    static final String TOKEN_SERVER_URL = "http://token_server_url";
+    static final String BROKER_URL = "http://broker_url";
+
+    // EnOS Application AccessKey and SecretKey, which can be obtain in Application Registration page in EnOS Console
+    static final String APP_KEY = "appKey";
+    static final String APP_SECRET = "appSecret";
+
+    // Device credentials, which can be obtained from Device Details page in EnOS Console
+    static final String ORG_ID = "orgId";
+    static final String ASSET_ID = "assetId";
+    static final String PRODUCT_KEY = "productKey";
+    static final String DEVICE_KEY = "deviceKey";
+
+    private static IntegrationAttributePostRequest buildAttributePostRequest() {
+        DeviceInfo deviceInfo1 = new DeviceInfo().setAssetId(ASSET_ID);
+        DeviceInfo deviceInfo2 = new DeviceInfo().setKey(PRODUCT_KEY, DEVICE_KEY);
+
+        // Attributes are defined in ThingModel
+        // FileAttribute1 is a file-type attribute
+        HashMap<String, Object> hashMap = Maps.newHashMap();
+        hashMap.put("IntAttribute1", 123);
+        hashMap.put("FileAttribute1", new File("sample1.txt"));
+        return IntegrationAttributePostRequest.builder()
+                .addAttribute(deviceInfo1, hashMap)
+                .addAttribute(deviceInfo2, hashMap)
+                .build();
+    }
+
+    public static void main(String[] args) {
+        // Construct a http connection
+        HttpConnection connection = new HttpConnection.Builder(
+                BROKER_URL, TOKEN_SERVER_URL, APP_KEY, APP_SECRET, ORG_ID)
+                .build();
+
+        IntegrationAttributePostRequest request = buildAttributePostRequest();
+
+        try {
+            IntegrationResponse response = connection.publish(request,  (bytes, length) ->
+                    System.out.println(String.format("Progress: %.2f %%", (float) bytes / length * 100.0)));
+            System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(response));
+        } catch (EnvisionException | IOException e) {
+            e.printStackTrace();
+        }
+
+        // Asynchronously call the attribute post with file
+        request = buildAttributePostRequest();
+
+        try {
+            connection.publish(request, new IIntegrationCallback() {
+                        @Override
+                        public void onResponse(IntegrationResponse response) {
+                            System.out.println("receive response asynchronously");
+                            System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(response));
+                        }
+
+                        @Override
+                        public void onFailure(Exception failure) {
+                            failure.printStackTrace();
+                        }
+                    }, (bytes, length) ->
+                            System.out.println(String.format("Progress: %.2f %%", (float) bytes / length * 100.0))
+            );
+        } catch (IOException | EnvisionException e) {
+            e.printStackTrace();
+        }
+    }
+}

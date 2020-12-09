@@ -48,8 +48,15 @@ public class TokenConnection {
     
     private Calendar expireTime;
 
+    private Calendar refreshTime;
+
     @NonNull
     private OkHttpClient okHttpClient;
+
+    public void getAndRefreshToken() throws EnvisionException {
+        getToken();
+        refreshToken();
+    }
 
     /**
      * Apply for a token
@@ -104,7 +111,8 @@ public class TokenConnection {
      */
     public boolean needGetToken()
     {
-        return Strings.isNullOrEmpty(accessToken);
+        return Strings.isNullOrEmpty(accessToken) ||
+                Calendar.getInstance().after(expireTime);
     }
     
     /**
@@ -112,8 +120,8 @@ public class TokenConnection {
      */
     public boolean needRefreshToken()
     {
-        return !Strings.isNullOrEmpty(accessToken) && 
-                Calendar.getInstance().after(expireTime);
+        return !Strings.isNullOrEmpty(accessToken) &&
+                Calendar.getInstance().after(refreshTime) && Calendar.getInstance().before(expireTime);
     }
 
     
@@ -135,13 +143,16 @@ public class TokenConnection {
                 checkArgument(response != null && response.getStatus() == 0 && 
                               response.getData() != null, "response %s", response);
 
-                // store token and expire time
+                // store token and expire time, refresh time
                 accessToken = response.getData().getAccessToken();
                 expireTime = Calendar.getInstance();
                 expireTime.add(SECOND, response.getData().getExpire());
+
+                refreshTime = Calendar.getInstance();
+                refreshTime.add(SECOND, response.getData().getExpire());
                 // refresh token 5 minutes before expire
-                expireTime.add(MINUTE, -5);
-                
+                refreshTime.add(MINUTE, -10);
+
             } catch (Exception e) {
                 log.warn("failed to decode token get response: " + httpResponse, e);
                 throw new EnvisionException(UNSUCCESSFUL_AUTH, e.getMessage());

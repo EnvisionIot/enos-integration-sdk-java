@@ -107,6 +107,7 @@ public class IntegrationMeasurepointPostRequest extends BaseIntegrationRequest {
         protected IntegrationMeasurepointPostRequest createRequestInstance() {
             return new IntegrationMeasurepointPostRequest();
         }
+
     }
 
 }

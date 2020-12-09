@@ -7,6 +7,7 @@ import com.envisioniot.enos.iot_mqtt_sdk.util.FileUtil;
 import com.envisioniot.enos.iot_mqtt_sdk.util.GsonUtil;
 import com.envisioniot.enos.iot_mqtt_sdk.util.StringUtil;
 import com.envisioniot.enos.sdk.data.DeviceInfo;
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
@@ -55,16 +56,19 @@ public abstract class BaseIntegrationRequest {
             payload.put("params", getParams());
         }
         if (getFiles() != null) {
-            payload.put("files", CreateFilePayload().get());
+            payload.put("files", CreateFilePayload());
         }
         return payload;
     }
 
-    private ExactValue CreateFilePayload() throws IOException {
+    private Map<String, Object> CreateFilePayload() throws IOException {
         Map<String, Object> disposition = Maps.newHashMap();
         for (UploadFileInfo fileInfo : files) {
             Map<String, String> map = Maps.newHashMap();
             map.put("featureId", fileInfo.getFeatureId());
+            map.put("fileName", fileInfo.getFilename());
+            map.put("fileLength", String.valueOf(fileInfo.getFile().length()));
+            map.put("fileExt", getFileExt(fileInfo.getFilename()).get());
             if (StringUtil.isNotEmpty(fileInfo.getAssetId())) {
                 map.put("assetId", fileInfo.getAssetId());
             } else {
@@ -75,7 +79,21 @@ public abstract class BaseIntegrationRequest {
 
             disposition.put(fileInfo.getFilename(), map);
         }
-        return new ExactValue(disposition);
+        return disposition;
+    }
+
+    private static Optional<String> getFileExt(String filename) {
+        return FileUtil.getExtensionByStringHandling(filename)
+                .transform(ext -> {
+                    if (!ext.isEmpty())
+                    {
+                        return "." + ext;
+                    }
+                    else
+                    {
+                        return "";
+                    }
+                });
     }
 
     protected abstract static class BaseBuilder<R extends BaseIntegrationRequest> {

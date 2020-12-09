@@ -45,7 +45,7 @@ desired version by inserting the following code snippet:
 <dependency>
     <groupId>com.envisioniot</groupId>
     <artifactId>enos-http-integration</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
     <!--This is latest current version number when this document is being written. Yours may vary.-->
 </dependency>
 ----
@@ -124,9 +124,11 @@ IntegrationResponse response = connection.publish(request, progressListener);
 
 == Sample Code
 
-* link:sample/MeasurepointPostSample.java[Uploading Measurement Points]
-* link:sample/FileMeasurepointPostSample.java[Uploading a File as Measurement Points]
+* link:sample/MeasurepointIntegrationSample.java[Uploading Measurement Points]
+* link:sample/FileMeasurepointIntegrationSample.java[Uploading a File as Measurement Points]
+* link:sample/DeleteFileSample.java[Uploading a File as Measurement Points by Lark]
 * link:sample/DownloadFileSample.java[Downloading a File]
+* link:sample/DeleteFileSample.java[Downloading a File by Lark]
 * link:sample/DeleteFileSample.java[Deleting a File]
 
 == Related Information
@@ -145,3 +147,4 @@ Under development
 
 * 2020/03/15 (Initial Release): Providing Integration APIs, File APIs
 * 2020/04/15 (0.1.1): Support OTA file download
+* 2020/12/09 (0.1.2): Support file upload/download via EnOS LARK
