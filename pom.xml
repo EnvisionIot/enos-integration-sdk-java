@@ -10,10 +10,11 @@
 
     <groupId>com.envisioniot</groupId>
     <artifactId>enos-http-integration</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
     <description>
         0.1.0 initial release
         0.1.1 ota file download, payload add files field
+        0.1.2 uniform file service
     </description>
 
     <packaging>jar</packaging>

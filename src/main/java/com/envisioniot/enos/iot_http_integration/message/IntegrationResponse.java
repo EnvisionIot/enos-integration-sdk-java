@@ -16,15 +16,10 @@ public class IntegrationResponse {
     private int code;
     private String msg;
     private String requestId;
-    private ExactValue data;
+    private IntegrationData data;
     
     public boolean isSuccess()
     {
         return code == SUCCESS_CODE;
-    }
-    
-    @SuppressWarnings("unchecked")
-    public <T> T getData() {
-        return data == null ? null : (T) data.get();
     }
 }

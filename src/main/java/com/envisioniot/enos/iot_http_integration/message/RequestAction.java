@@ -11,4 +11,5 @@ public class RequestAction {
 
     public static final String DELETE_ACTION = "delete";
     public static final String DOWNLOAD_ACTION = "download";
+    public static final String GET_DOWNLOAD_URL_ACTION = "getDownloadUrl";
 }
