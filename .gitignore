@@ -8,6 +8,10 @@ target/*
 # BlueJ files
 *.ctxt
 
+# IDEA files
+.idea/
+*.iml
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

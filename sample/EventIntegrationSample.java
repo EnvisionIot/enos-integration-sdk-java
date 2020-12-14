@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.util.Map;
 
 public class EventIntegrationSample {
-    // EnOS Token Server URL and HTTP Broker URL, which can be obtained from Environment Information page in EnOS Console
-    static final String TOKEN_SERVER_URL = "http://token_server_url";
-    static final String BROKER_URL = "http://broker_url";
+    // EnOS API Gateway URL and HTTP Integration Channel URL, which can be obtained from Environment Information page in EnOS Console
+    static final String API_GW_URL = "http://api_gw_url";
+    static final String INTEGRATION_CHANNEL_URL = "http://integration_channel_url";
 
     // EnOS Application AccessKey and SecretKey, which can be obtain in Application Registration page in EnOS Console
     static final String APP_KEY = "appKey";
@@ -47,7 +47,7 @@ public class EventIntegrationSample {
     public static void main(String[] args) {
         // Construct a http connection
         HttpConnection connection = new HttpConnection.Builder(
-                BROKER_URL, TOKEN_SERVER_URL, APP_KEY, APP_SECRET, ORG_ID)
+                INTEGRATION_CHANNEL_URL, API_GW_URL, APP_KEY, APP_SECRET, ORG_ID)
                 .build();
 
         IntegrationEventPostRequest request = buildEventPostRequest();

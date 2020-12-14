@@ -102,10 +102,11 @@ This SDK also provides:
 +
 [source,java]
 ----
-// BROKER_URL is the URL of EnOS HTTP Broker and TOKEN_SERVER_URL is the URL of Enos APIM Server, which can be obtained in the Environment Information page in EnOS Console
+// INTEGRATION_CHANNEL_URL is the URL of EnOS HTTP Integration Channel URL and API_GW_URL is the URL of API Gateway, 
+// which can be obtained in the Environment Information page in EnOS Console
 // The APP_KEY, APP_SECRET and ORG_ID can be obtain in Application Registration page in EnOS Console
 HttpConnection connection = new HttpConnection.Builder(
-        BROKER_URL, TOKEN_SERVER_URL, APP_KEY, APP_SECRET, ORG_ID)
+        INTEGRATION_CHANNEL_URL, API_GW_URL, APP_KEY, APP_SECRET, ORG_ID)
         .build();
 ----
 . Upload measurement points via the HTTP connection.
