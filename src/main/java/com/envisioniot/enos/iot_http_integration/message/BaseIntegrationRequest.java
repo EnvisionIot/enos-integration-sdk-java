@@ -31,6 +31,8 @@ public abstract class BaseIntegrationRequest {
 
     private List<UploadFileInfo> files;
 
+    private boolean isRealtimeIntegration = true;
+
     /**
      * action parameter of the request API
      * @return
@@ -58,6 +60,7 @@ public abstract class BaseIntegrationRequest {
         if (getFiles() != null) {
             payload.put("files", CreateFilePayload());
         }
+        payload.put("isRealtimeIntegration", isRealtimeIntegration);
         return payload;
     }
 
@@ -67,6 +70,7 @@ public abstract class BaseIntegrationRequest {
             Map<String, String> map = Maps.newHashMap();
             map.put("featureId", fileInfo.getFeatureId());
             map.put("fileName", fileInfo.getFilename());
+            map.put("originalFilename", fileInfo.getOriginalFilename());
             map.put("fileLength", String.valueOf(fileInfo.getFile().length()));
             map.put("fileExt", getFileExt(fileInfo.getFilename()).get());
             if (StringUtil.isNotEmpty(fileInfo.getAssetId())) {
@@ -98,6 +102,8 @@ public abstract class BaseIntegrationRequest {
 
     protected abstract static class BaseBuilder<R extends BaseIntegrationRequest> {
         final String LOCAL_FILE_SCHEMA = "local://";
+        boolean isRealtimeIntegration = true;
+
         List<UploadFileInfo> files = Lists.newArrayList();
 
         protected abstract String createMethod();
@@ -110,11 +116,13 @@ public abstract class BaseIntegrationRequest {
             R request = createRequestInstance();
             request.setMethod(createMethod());
             request.setParams(createParams());
+            request.setRealtimeIntegration(isRealtimeIntegration);
             return request;
         }
 
         String storeFile(DeviceInfo deviceInfo, String featureType, String featureId, File file) {
             UploadFileInfo fileInfo = new UploadFileInfo();
+            fileInfo.setOriginalFilename(file.getName());
             String filename = FileUtil.generateFileName(file);
             fileInfo.setFilename(filename);
             fileInfo.setFile(file);

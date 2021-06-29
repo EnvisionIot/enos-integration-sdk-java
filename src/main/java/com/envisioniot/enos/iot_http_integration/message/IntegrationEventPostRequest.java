@@ -32,6 +32,11 @@ public class IntegrationEventPostRequest extends BaseIntegrationRequest {
             this.events = new LinkedHashMap<>();
         }
 
+        public Builder realTimeIntegration(boolean isRealtimeIntegration) {
+            this.isRealtimeIntegration = isRealtimeIntegration;
+            return this;
+        }
+
         public Builder addEvent(DeviceInfo deviceInfo, long time, Map<String/*eventId*/, Map<String, Object>> eventValues) {
             Map<String, Map<String, Object>> map = this.events.computeIfAbsent(
                     Pair.makePair(deviceInfo, time), pair -> new HashMap<>());
