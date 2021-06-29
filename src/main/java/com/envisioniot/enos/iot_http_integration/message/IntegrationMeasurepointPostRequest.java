@@ -6,6 +6,11 @@ import com.envisioniot.enos.iot_mqtt_sdk.util.Pair;
 import com.envisioniot.enos.iot_mqtt_sdk.util.StringUtil;
 import com.envisioniot.enos.sdk.data.DeviceInfo;
 import com.google.common.collect.Maps;
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.File;
 import java.util.*;
@@ -14,7 +19,10 @@ import java.util.*;
  * @author :charlescai
  * @date :2020-02-18
  */
+@Getter
+@Setter
 public class IntegrationMeasurepointPostRequest extends BaseIntegrationRequest {
+
     public static Builder builder() {
         return new Builder();
     }
@@ -26,11 +34,15 @@ public class IntegrationMeasurepointPostRequest extends BaseIntegrationRequest {
 
 
     public static class Builder extends BaseBuilder<IntegrationMeasurepointPostRequest> {
-
         private Map<Pair<DeviceInfo/*deviceInfo*/, Long/*time*/>, Map<String/*pointId*/, Object/*value*/>> measurepoints;
 
         Builder() {
             this.measurepoints = new LinkedHashMap<>();
+        }
+
+        public Builder realTimeIntegration(boolean isRealtimeIntegration) {
+            this.isRealtimeIntegration = isRealtimeIntegration;
+            return this;
         }
 
         public Builder addMeasurepoint(DeviceInfo deviceInfo, long time, Map<String, Object> measurepointValues) {

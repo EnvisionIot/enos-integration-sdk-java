@@ -5,6 +5,7 @@ import com.envisioniot.enos.iot_http_integration.progress.IProgressListener;
 import com.envisioniot.enos.iot_http_integration.progress.ProgressRequestWrapper;
 import com.envisioniot.enos.iot_http_integration.utils.FileUtil;
 import com.envisioniot.enos.iot_mqtt_sdk.core.exception.EnvisionException;
+import com.envisioniot.enos.iot_mqtt_sdk.core.internals.constants.RangeFileBody;
 import com.envisioniot.enos.iot_mqtt_sdk.message.upstream.tsl.UploadFileInfo;
 import com.envisioniot.enos.iot_mqtt_sdk.util.GsonUtil;
 import com.envisioniot.enos.iot_mqtt_sdk.util.StringUtil;
@@ -47,6 +48,7 @@ public class HttpConnection {
     private static final String FILES_PATH = "/connect-service/v2.1/files";
 
     private static final String APIM_ACCESS_TOKEN = "apim-accesstoken";
+    private static final String RANGE = "Range";
 
     /**
      * Builder for http connection. A customized OkHttpClient can be provided, to
@@ -257,28 +259,52 @@ public class HttpConnection {
         publishCallAsync(call, callback);
     }
 
-    /**
-     * Download file
-     *
-     * @param deviceInfo
-     * @param fileUri
-     * @return
-     * @throws EnvisionException
-     */
-    public InputStream downloadFile(DeviceInfo deviceInfo, String fileUri, FileCategory category) throws EnvisionException, IOException {
+    public RangeFileBody downloadFile(DeviceInfo deviceInfo, String fileUri, FileCategory category, Long startRange, Long endRange) throws EnvisionException, IOException {
+        RangeFileBody.RangeFileBodyBuilder builder = RangeFileBody.builder();
 
-        if (fileUri.startsWith(FileScheme.ENOS_LARK_URI_SCHEME)) {
-            String downloadUrl = getDownloadUrl(deviceInfo, fileUri, category);
-            Response response =  FileUtil.downloadFile(downloadUrl);
-            Preconditions.checkArgument(response.isSuccessful(),
-                    "fail to download file, downloadUrl: %s, msg: %s",
-                    downloadUrl, response.message());
-            Preconditions.checkNotNull(response.body(),
-                    "response body is null, downloadUrl: %s", downloadUrl);
-            return response.body().byteStream();
+        Call call = generateDownloadCall(orgId, deviceInfo, fileUri, category, startRange, endRange);
+        Response httpResponse;
+        try {
+            httpResponse = call.execute();
+
+            if (!httpResponse.isSuccessful()) {
+                throw new EnvisionException(httpResponse.code(), httpResponse.message());
+            }
+
+            try {
+                Preconditions.checkNotNull(httpResponse);
+                Preconditions.checkNotNull(httpResponse.body());
+
+                return builder.contentLength(Integer.parseInt(httpResponse.headers().get("Content-length")))
+                        .contentRange(httpResponse.headers().get("Content-Range"))
+                        .acceptRanges(httpResponse.headers().get("Accept-Ranges"))
+                        .data(httpResponse.body().byteStream())
+                        .build();
+            } catch (Exception e) {
+                log.info("failed to get response: " + httpResponse, e);
+                throw new EnvisionException(CLIENT_ERROR);
+            }
+        } catch (SocketException e) {
+            log.info("failed to execute request due to socket error {}", e.getMessage());
+            throw new EnvisionException(SOCKET_ERROR, e.getMessage());
+        } catch (EnvisionException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("failed to execute request", e);
+            throw new EnvisionException(CLIENT_ERROR);
         }
+    }
 
-        Call call = generateDownloadCall(orgId, deviceInfo, fileUri, category);
+        /**
+         * Download file
+         *
+         * @param deviceInfo
+         * @param fileUri
+         * @return
+         * @throws EnvisionException
+         */
+    public InputStream downloadFile(DeviceInfo deviceInfo, String fileUri, FileCategory category) throws EnvisionException, IOException {
+        Call call = generateDownloadCall(orgId, deviceInfo, fileUri, category, null, null);
         Response httpResponse;
         try {
             httpResponse = call.execute();
@@ -308,13 +334,11 @@ public class HttpConnection {
     }
 
     public void downloadFile(DeviceInfo deviceInfo, String fileUri, FileCategory category, IFileCallback callback) throws EnvisionException {
-        Call call;
-        if (fileUri.startsWith(FileScheme.ENOS_LARK_URI_SCHEME)) {
-            call = generateGetDownloadUrlCall(deviceInfo, fileUri, category);
-        } else {
-            call = generateDownloadCall(orgId, deviceInfo, fileUri, category);
-        }
+        downloadFile(deviceInfo, fileUri, category, null, null, callback);
+    }
 
+    public void downloadFile(DeviceInfo deviceInfo, String fileUri, FileCategory category, Long startRange, Long endRange, IFileCallback callback) throws EnvisionException {
+        Call call = generateDownloadCall(orgId, deviceInfo, fileUri, category, startRange, endRange);
 
         call.enqueue(new Callback() {
             @Override
@@ -331,14 +355,18 @@ public class HttpConnection {
                 try {
                     Preconditions.checkNotNull(response);
                     Preconditions.checkNotNull(response.body());
-                    if (response.isSuccessful() && fileUri.startsWith(FileScheme.ENOS_LARK_URI_SCHEME)) {
-                        FileDownloadResponse fileDownloadResponse = GsonUtil.fromJson(
-                                response.body().string(), FileDownloadResponse.class);
-                        String fileDownloadUrl = fileDownloadResponse.getData();
-                        response = FileUtil.downloadFile(fileDownloadUrl);
-                    }
                     if (response.isSuccessful() && response.body() != null) {
                         callback.onResponse(response.body().byteStream());
+
+                        if (response.code() == 206) {
+                            RangeFileBody.RangeFileBodyBuilder builder = RangeFileBody.builder();
+                            RangeFileBody rangeFileBody = builder.contentLength(Integer.parseInt(response.headers().get("Content-length")))
+                                    .contentRange(response.headers().get("Content-Range"))
+                                    .acceptRanges(response.headers().get("Accept-Ranges"))
+                                    .data(response.body().byteStream())
+                                    .build();
+                            callback.onRangeResponse(rangeFileBody);
+                        }
                     }
                 } catch (Exception e) {
                     log.info("failed to get response: " + response, e);
@@ -513,6 +541,8 @@ public class HttpConnection {
                 integrationBrokerUrl + INTEGRATION_PATH + "?action=" + request.getRequestAction() + "&orgId=" + orgId + useLarkPart())
                 .addHeader(APIM_ACCESS_TOKEN, tokenConnection.getAccessToken()).post(body).build();
 
+        log.info("url: " + httpRequest);
+        log.info(APIM_ACCESS_TOKEN + httpRequest.header(APIM_ACCESS_TOKEN));
         return okHttpClient.newCall(httpRequest);
     }
 
@@ -571,8 +601,7 @@ public class HttpConnection {
         return okHttpClient.newCall(httpRequest);
     }
 
-    private Call generateDownloadCall(String orgId, DeviceInfo deviceInfo, String fileUri, FileCategory category) throws EnvisionException {
-
+    private Call generateDownloadCall(String orgId, DeviceInfo deviceInfo, String fileUri, FileCategory category, Long startRange, Long endRange) throws EnvisionException {
         checkAuth();
 
         StringBuilder uriBuilder = new StringBuilder()
@@ -589,7 +618,22 @@ public class HttpConnection {
                     .append("&deviceKey=").append(deviceInfo.getDeviceKey());
         }
 
-        Request httpRequest = new Request.Builder()
+        Request.Builder builder = new Request.Builder();
+
+        if (startRange != null || endRange != null) {
+            StringBuilder rangeBuilder = new StringBuilder()
+                    .append("bytes=");
+            if (startRange != null) {
+                rangeBuilder.append(startRange);
+            }
+            rangeBuilder.append("-");
+            if (endRange != null) {
+                rangeBuilder.append(endRange);
+            }
+            builder.addHeader(RANGE, rangeBuilder.toString());
+        }
+
+        Request httpRequest = builder
                 .url(uriBuilder.toString())
                 .addHeader(APIM_ACCESS_TOKEN, tokenConnection.getAccessToken())
                 .get()

@@ -31,6 +31,11 @@ public class IntegrationAttributePostRequest extends BaseIntegrationRequest{
             this.attributes = new LinkedHashMap<>();
         }
 
+        public Builder realTimeIntegration(boolean isRealtimeIntegration) {
+            this.isRealtimeIntegration = isRealtimeIntegration;
+            return this;
+        }
+
         public Builder addAttribute(DeviceInfo deviceInfo, Map<String, Object> attributeValue) {
             Map<String, Object> map = this.attributes.computeIfAbsent(
                     deviceInfo, pair -> new HashMap<>());
